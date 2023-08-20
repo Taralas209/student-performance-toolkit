@@ -19,21 +19,10 @@ def delete_chastisement(pupil):
     Chastisement.objects.filter(schoolkid=pupil).delete()
 
 
-def create_commendation(pupil, lesson, commendation_text):
-
-    Commendation(
-        text=commendation_text,
-        created=lesson.date,
-        schoolkid=pupil,
-        subject=lesson.subject,
-        teacher=lesson.teacher
-    ).save()
-
-
 def get_random_lesson(pupil, subject):
     lessons = Lesson.objects.filter(year_of_study=pupil.year_of_study, group_letter=pupil.group_letter)
     if not subject:
-        random_lesson = random.choice(lessons)
+        random_lesson = lessons.order_by('?').first()
         return random_lesson
     else:
         filtered_lessons = lessons.filter(subject__title__contains=subject)
@@ -95,10 +84,10 @@ def get_pupil(args):
     try:
         pupil = Schoolkid.objects.get(full_name__contains=args.name)
         return pupil
-    except MultipleObjectsReturned:
+    except Schoolkid.MultipleObjectsReturned:
         print("Найдено несколько учеников с таким именем. Уточните имя.")
         sys.exit(1)
-    except ObjectDoesNotExist:
+    except Schoolkid.ObjectDoesNotExist:
         print("Ученик с таким именем не найден. Проверьте правильно ли вы указали имя")
         sys.exit(2)
 
@@ -116,4 +105,10 @@ if __name__ == "__main__":
     fix_marks(pupil)
     delete_chastisement(pupil)
     commendation_text = get_random_commendation()
-    create_commendation(pupil, lesson, commendation_text)
+    Commendation.objects.create(
+        text=commendation_text,
+        created=lesson.date,
+        schoolkid=pupil,
+        subject=lesson.subject,
+        teacher=lesson.teacher
+    )
